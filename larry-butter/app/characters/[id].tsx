@@ -1,46 +1,82 @@
-// app/characters/[id].tsx
+import { useEffect, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
-import { Image, ScrollView, View } from "react-native";
+import { Image, Pressable, ScrollView, View } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 
 import { Text } from "@/components/ui/text";
-import { useFavourites } from "@/context/FavouritesContext";
 import { Character } from "@/types";
-import { Pressable } from "react-native";
+import { getCharacterImage, setCharacterImage } from "@/lib/characterImages";
+import { useFavourites } from "@/context/FavouritesContext";
 
 const CharacterDetailsScreen = () => {
   const params = useLocalSearchParams<{
     id: string;
     name?: string;
     house?: string;
-    actor?: string;
-    ancestry?: string;
-    patronus?: string;
-    image?: string;
+    role?: string;
+    description?: string;
   }>();
-
-  const { id, name, house, actor, ancestry, patronus, image } = params;
 
   const { toggleFavourite, isFavourite } = useFavourites();
 
   const character: Character = {
-    id: String(id),
-    name: name || "Unknown",
-    house: house || "Unknown",
-    actor: actor || undefined,
-    ancestry: ancestry || undefined,
-    patronus: patronus || undefined,
-    image: image || undefined,
+    id: String(params.id),
+    name: params.name ?? "Unknown",
+    house: params.house ?? "Unknown",
+    role: params.role,
+    description: params.description,
   };
 
   const favourite = isFavourite(character.id);
 
+  const [pickedImage, setPickedImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const uri = await getCharacterImage(character.id);
+        if (!cancelled) setPickedImage(uri);
+      } catch (e) {
+        console.log("Error loading character image", e);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [character.id]);
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      alert("Permission denied");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+
+    if (result.canceled) return;
+
+    const uri = result.assets[0].uri;
+    setPickedImage(uri);
+    await setCharacterImage(character.id, uri);
+  };
+
   return (
     <ScrollView className="flex-1 bg-white">
       <View className="items-center px-6 pt-10 pb-6">
-        {/* Avatar / Image */}
-        {character.image ? (
+        {/* Avatar */}
+        {pickedImage ? (
           <Image
-            source={{ uri: character.image }}
+            source={{ uri: pickedImage }}
             style={{
               width: 160,
               height: 160,
@@ -48,37 +84,33 @@ const CharacterDetailsScreen = () => {
               marginBottom: 16,
               backgroundColor: "#e5e5e5",
             }}
-            resizeMode="cover"
           />
         ) : (
-          <View
-            className="w-40 h-40 rounded-full bg-neutral-200 mb-4 items-center justify-center"
-          >
+          <View className="w-40 h-40 rounded-full bg-neutral-200 mb-4 items-center justify-center">
             <Text className="text-neutral-500">No image</Text>
           </View>
         )}
 
-        {/* Name + house */}
-        <Text className="text-2xl font-bold mb-1">
-          {character.name}
-        </Text>
+        <Text className="text-2xl font-bold mb-1">{character.name}</Text>
 
         <Text className="px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-xs mb-4">
-          {character.house || "No house info"}
+          {character.house}
         </Text>
+
+        {/* Pick image */}
+        <Pressable
+          onPress={pickImage}
+          className="px-4 py-2 border border-neutral-300 rounded-full mb-4"
+        >
+          <Text>Pick image</Text>
+        </Pressable>
 
         {/* Favourite toggle */}
         <Pressable
           onPress={() => toggleFavourite(character)}
           className="px-4 py-2 border border-neutral-300 rounded-full flex-row items-center mb-6"
         >
-          <Text
-            className={
-              favourite
-                ? "text-red-500 text-lg mr-2"
-                : "text-neutral-400 text-lg mr-2"
-            }
-          >
+          <Text className={favourite ? "text-red-500 text-lg mr-2" : "text-neutral-400 text-lg mr-2"}>
             {favourite ? "♥" : "♡"}
           </Text>
           <Text className="text-sm">
@@ -87,15 +119,10 @@ const CharacterDetailsScreen = () => {
         </Pressable>
       </View>
 
-      {/* Info section */}
       <View className="px-6 pb-10">
-        <Text className="text-lg font-semibold mb-3">
-          Details
-        </Text>
-
-        <InfoRow label="Actor" value={character.actor} />
-        <InfoRow label="Ancestry" value={character.ancestry} />
-        <InfoRow label="Patronus" value={character.patronus} />
+        <Text className="text-lg font-semibold mb-3">Details</Text>
+        <InfoRow label="Role" value={character.role} />
+        <InfoRow label="Description" value={character.description} />
       </View>
     </ScrollView>
   );
@@ -104,9 +131,7 @@ const CharacterDetailsScreen = () => {
 const InfoRow = ({ label, value }: { label: string; value?: string }) => {
   return (
     <View className="mb-2">
-      <Text className="text-xs text-neutral-500 uppercase">
-        {label}
-      </Text>
+      <Text className="text-xs text-neutral-500 uppercase">{label}</Text>
       <Text className="text-base">
         {value && value.trim().length > 0 ? value : "Unknown"}
       </Text>

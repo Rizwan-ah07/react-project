@@ -1,24 +1,40 @@
 // app/(tabs)/characters.tsx
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   Pressable,
   View,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 
 import { Text } from "@/components/ui/text";
 import { Character } from "@/types";
 import { useFavourites } from "@/context/FavouritesContext";
+import { getCharacterImage } from "@/lib/characterImages";
 
 const CHARACTERS_URL =
   "https://sampleapis.assimilate.be/harrypotter/characters";
+
+type ApiCharacter = {
+  id: number;
+  name: string;
+  house: string;
+  role?: string;
+  description?: string;
+};
 
 const CharactersScreen = () => {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // id -> imageUri
+  const [imagesById, setImagesById] = useState<Record<string, string | null>>(
+    {}
+  );
 
   const { toggleFavourite, isFavourite } = useFavourites();
   const router = useRouter();
@@ -32,30 +48,24 @@ const CharactersScreen = () => {
         setError(null);
 
         const response = await fetch(CHARACTERS_URL);
-        const json = await response.json();
+        const json: ApiCharacter[] = await response.json();
 
         if (cancelled) return;
 
-        const mapped: Character[] = json.map((item: any) => ({
-          id: String(item.id ?? item.slug ?? item.name),
+        const mapped: Character[] = json.map((item) => ({
+          id: String(item.id),
           name: item.name ?? "Unknown",
           house: item.house ?? "Unknown",
-          image: item.image,
-          actor: item.actor,
-          ancestry: item.ancestry,
-          patronus: item.patronus,
+          role: item.role,
+          description: item.description,
         }));
 
         setCharacters(mapped);
       } catch (e) {
         console.log(e);
-        if (!cancelled) {
-          setError("Failed to load characters");
-        }
+        if (!cancelled) setError("Failed to load characters");
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     };
 
@@ -66,9 +76,32 @@ const CharactersScreen = () => {
     };
   }, []);
 
-  if (loading) {
-    return <ActivityIndicator animating={true} />;
-  }
+  // reload images whenever screen becomes active (so after you pick an image)
+  const loadImages = useCallback(async () => {
+    try {
+      const entries = await Promise.all(
+        characters.map(async (c) => {
+          const uri = await getCharacterImage(c.id);
+          return [c.id, uri] as const;
+        })
+      );
+
+      const next: Record<string, string | null> = {};
+      for (const [id, uri] of entries) next[id] = uri;
+
+      setImagesById(next);
+    } catch (e) {
+      console.log("Error loading character images", e);
+    }
+  }, [characters]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (characters.length > 0) loadImages();
+    }, [characters.length, loadImages])
+  );
+
+  if (loading) return <ActivityIndicator animating={true} />;
 
   if (error) {
     return (
@@ -84,13 +117,10 @@ const CharactersScreen = () => {
         data={characters}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 16 }}
-        ItemSeparatorComponent={() => (
-          <View className="h-[1px] bg-neutral-200" />
-        )}
+        ItemSeparatorComponent={() => <View className="h-[1px] bg-neutral-200" />}
         renderItem={({ item }) => {
           const favourite = isFavourite(item.id);
-
-          // inside renderItem in CharactersScreen
+          const img = imagesById[item.id];
 
           return (
             <Pressable
@@ -102,29 +132,34 @@ const CharactersScreen = () => {
                     id: item.id,
                     name: item.name,
                     house: item.house,
-                    actor: item.actor ?? "",
-                    ancestry: item.ancestry ?? "",
-                    patronus: item.patronus ?? "",
-                    image: item.image ?? "",
+                    role: item.role ?? "",
+                    description: item.description ?? "",
                   },
                 })
               }
               onLongPress={() => toggleFavourite(item)}
             >
-              <View>
-                <Text className="text-base font-semibold">
-                  {item.name}
-                </Text>
-                <Text className="text-sm text-neutral-500">
-                  {item.house}
-                </Text>
+              <View className="flex-row items-center gap-3">
+                {img ? (
+                  <Image
+                    source={{ uri: img }}
+                    style={{ width: 44, height: 44, borderRadius: 22 }}
+                  />
+                ) : (
+                  <View className="w-11 h-11 rounded-full bg-neutral-200 items-center justify-center">
+                    <Text className="text-xs text-neutral-500">N/A</Text>
+                  </View>
+                )}
+
+                <View>
+                  <Text className="text-base font-semibold">{item.name}</Text>
+                  <Text className="text-sm text-neutral-500">{item.house}</Text>
+                </View>
               </View>
 
               <Text
                 className={
-                  favourite
-                    ? "text-red-500 text-lg"
-                    : "text-neutral-300 text-lg"
+                  favourite ? "text-red-500 text-lg" : "text-neutral-300 text-lg"
                 }
               >
                 {favourite ? "♥" : "♡"}

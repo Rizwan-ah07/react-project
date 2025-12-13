@@ -4,10 +4,9 @@ export interface Character {
   id: string;
   name: string;
   house: string;
+  role?: string;
+  description?: string;
   image?: string;
-  actor?: string;
-  ancestry?: string;
-  patronus?: string;
 }
 
 export interface Spell {
@@ -16,4 +15,12 @@ export interface Spell {
   type?: string;
   difficulty?: string;
   description?: string;
+}
+
+export interface DbFavouriteCharacterRow {
+  device_id: string;
+  character_id: string;
+  name: string;
+  house: string | null;
+  image: string | null;
 }

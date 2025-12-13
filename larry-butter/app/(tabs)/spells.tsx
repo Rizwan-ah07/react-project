@@ -1,3 +1,5 @@
+// app/(tabs)/spells.tsx
+
 import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
 import { Link } from "expo-router";

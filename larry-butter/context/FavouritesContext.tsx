@@ -1,82 +1,85 @@
+// context/FavouritesContext.tsx
+
 import { ReactNode, createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Character, Spell } from "@/types";
+import { Character, Spell, DbFavouriteCharacterRow } from "@/types";
+import { supabase } from "@/lib/supabase";
+import { getDeviceId } from "@/lib/device";
+
 
 interface FavouritesContextValue {
-  // Characters
   favourites: Character[];
   toggleFavourite: (character: Character) => void;
   isFavourite: (id: string) => boolean;
 
-  // Spells
   favouriteSpells: Spell[];
   toggleFavouriteSpell: (spell: Spell) => void;
   isFavouriteSpell: (id: string) => boolean;
 
-  // Shared
   loading: boolean;
 }
 
 const FavouritesContext = createContext<FavouritesContextValue | undefined>(undefined);
 
-const STORAGE_KEY_CHARACTERS = "favouriteCharacters";
 const STORAGE_KEY_SPELLS = "favouriteSpells";
 
 const FavouritesProvider = ({ children }: { children: ReactNode }) => {
-  const [favourites, setFavourites] = useState<Character[]>([]);
-  const [favouriteSpells, setFavouriteSpells] = useState<Spell[]>([]);
+  const [deviceId, setDeviceId] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
 
-  // load from AsyncStorage on start
+  // characters in Supabase
+  const [favourites, setFavourites] = useState<Character[]>([]);
+
+  // spells in AsyncStorage
+  const [favouriteSpells, setFavouriteSpells] = useState<Spell[]>([]);
+
   useEffect(() => {
     let cancelled = false;
 
-    const load = async () => {
+    const init = async () => {
       try {
-        const storedCharacters = await AsyncStorage.getItem(STORAGE_KEY_CHARACTERS);
-        const storedSpells = await AsyncStorage.getItem(STORAGE_KEY_SPELLS);
-
+        const id = await getDeviceId();
         if (cancelled) return;
+        setDeviceId(id);
 
-        if (storedCharacters) {
-          setFavourites(JSON.parse(storedCharacters));
-        }
-
-        if (storedSpells) {
+        // load spells (AsyncStorage)
+        const storedSpells = await AsyncStorage.getItem(STORAGE_KEY_SPELLS);
+        if (!cancelled && storedSpells) {
           setFavouriteSpells(JSON.parse(storedSpells));
         }
+
+        // load character favourites (Supabase)
+        const { data, error } = await supabase
+          .from("favourite_characters")
+          .select("device_id, character_id, name, house, image")
+          .eq("device_id", id);
+
+        if (error) throw error;
+        if (cancelled) return;
+
+        const mapped: Character[] = (data as DbFavouriteCharacterRow[]).map((row) => ({
+          id: row.character_id,
+          name: row.name,
+          house: row.house ?? "",
+          image: row.image ?? undefined,
+        }));
+
+        setFavourites(mapped);
       } catch (e) {
-        console.log("Error loading favourites", e);
+        console.log("Error initializing favourites", e);
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     };
 
-    load();
+    init();
 
     return () => {
       cancelled = true;
     };
   }, []);
 
-  // save characters to AsyncStorage when favourites change
-  useEffect(() => {
-    const save = async () => {
-      try {
-        await AsyncStorage.setItem(STORAGE_KEY_CHARACTERS, JSON.stringify(favourites));
-      } catch (e) {
-        console.log("Error saving favourite characters", e);
-      }
-    };
-
-    if (!loading) {
-      save();
-    }
-  }, [favourites, loading]);
-
-  // save spells to AsyncStorage when favouriteSpells change
+  // save spells favourites to AsyncStorage
   useEffect(() => {
     const save = async () => {
       try {
@@ -86,31 +89,72 @@ const FavouritesProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
-    if (!loading) {
-      save();
-    }
+    if (!loading) save();
   }, [favouriteSpells, loading]);
-
-  // Characters
-  const toggleFavourite = (character: Character) => {
-    setFavourites((current) => {
-      const exists = current.some((c) => c.id === character.id);
-      if (exists) {
-        return current.filter((c) => c.id !== character.id);
-      }
-      return [...current, character];
-    });
-  };
 
   const isFavourite = (id: string) => favourites.some((c) => c.id === id);
 
-  // Spells
+const toggleFavourite = (character: Character) => {
+  if (!deviceId) return;
+
+  const exists = favourites.some((c) => c.id === character.id);
+
+  // optimistic UI update
+  setFavourites((current) => {
+    if (exists) {
+      return current.filter((c) => c.id !== character.id);
+    }
+    return [...current, character];
+  });
+
+  // write to Supabase in background
+  (async () => {
+    try {
+      if (exists) {
+        // remove favourite
+        const { error } = await supabase
+          .from("favourite_characters")
+          .delete()
+          .eq("device_id", deviceId)
+          .eq("character_id", character.id);
+
+        if (error) throw error;
+      } else {
+        // add favourite
+        const { error } = await supabase
+          .from("favourite_characters")
+          .insert({
+            device_id: deviceId,
+            character_id: character.id,
+            name: character.name,
+            house: character.house ?? null,
+            image: character.image ?? null,
+          });
+
+        if (error) throw error;
+      }
+    } catch (e) {
+      console.log("Error toggling favourite character", e);
+
+      // rollback UI if DB fails
+      setFavourites((current) => {
+        const stillExists = current.some((c) => c.id === character.id);
+
+        if (exists && !stillExists) return [...current, character];
+        if (!exists && stillExists) return current.filter((c) => c.id !== character.id);
+
+        return current;
+      });
+    }
+  })();
+};
+
+
+
   const toggleFavouriteSpell = (spell: Spell) => {
     setFavouriteSpells((current) => {
       const exists = current.some((s) => s.id === spell.id);
-      if (exists) {
-        return current.filter((s) => s.id !== spell.id);
-      }
+      if (exists) return current.filter((s) => s.id !== spell.id);
       return [...current, spell];
     });
   };
@@ -138,9 +182,7 @@ const FavouritesProvider = ({ children }: { children: ReactNode }) => {
 
 export const useFavourites = () => {
   const ctx = useContext(FavouritesContext);
-  if (!ctx) {
-    throw new Error("useFavourites must be used within a FavouritesProvider");
-  }
+  if (!ctx) throw new Error("useFavourites must be used within a FavouritesProvider");
   return ctx;
 };
 

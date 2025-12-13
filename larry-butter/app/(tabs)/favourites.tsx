@@ -1,55 +1,103 @@
-import { View, Image, TouchableOpacity } from "react-native";
-import { Text } from "@/components/ui/text";
-import { useFavourites } from "@/context/FavouritesContext";
+// app/(tabs)/favourites.tsx
+
+import { View, FlatList, Pressable } from "react-native";
 import { Link } from "expo-router";
 
-export default function FavouritesScreen() {
-  const { favourites, toggleFavourite } = useFavourites();
+import { Text } from "@/components/ui/text";
+import { useFavourites } from "@/context/FavouritesContext";
 
-  if (favourites.length === 0) {
+type FavouriteRow =
+  | { kind: "character"; id: string; title: string; subtitle?: string }
+  | { kind: "spell"; id: string; title: string; subtitle?: string };
+
+const FavouritesScreen = () => {
+  const { favourites, favouriteSpells, loading } = useFavourites();
+
+  if (loading) {
     return (
       <View className="flex-1 items-center justify-center">
-        <Text className="text-lg text-gray-500">No favourites yet</Text>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  const rows: FavouriteRow[] = [
+    ...favourites.map((c) => ({
+      kind: "character" as const,
+      id: c.id,
+      title: c.name,
+      subtitle: c.house ? `House: ${c.house}` : "Character",
+    })),
+    ...favouriteSpells.map((s) => ({
+      kind: "spell" as const,
+      id: s.id,
+      title: s.name,
+      subtitle: s.description ? s.description : "Spell",
+    })),
+  ];
+
+  if (rows.length === 0) {
+    return (
+      <View className="flex-1 items-center justify-center px-6">
+        <Text className="text-xl font-semibold mb-2">No favourites yet</Text>
+        <Text className="text-muted-foreground text-center">
+          Add characters or spells to your favourites.
+        </Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 p-4 gap-4">
-      {favourites.map((item) => (
-        <Link
-          key={item.id}
-          href={{
-            pathname: "/characters/[id]",
-            // pass all fields, like in the characters list
-            params: { ...item, id: String(item.id) },
-          }}
-          asChild
-        >
-          <TouchableOpacity className="flex-row items-center gap-4 p-3 border border-gray-300 rounded-xl bg-white">
-            {item.image ? (
-              <Image
-                source={{ uri: item.image }}
-                className="w-16 h-16 rounded-full"
-              />
-            ) : (
-              <View className="w-16 h-16 rounded-full bg-gray-300 items-center justify-center">
-                <Text>No image</Text>
-              </View>
-            )}
+    <View className="flex-1 bg-background px-4 pt-4">
+      <Text className="text-2xl font-bold mb-3">Favourites</Text>
 
-            <View className="flex-1">
-              <Text className="text-lg font-bold">{item.name}</Text>
-              <Text className="text-gray-500">{item.house || "Unknown"}</Text>
-            </View>
+      <FlatList
+        data={rows}
+        keyExtractor={(item) => `${item.kind}-${item.id}`}
+        ItemSeparatorComponent={() => <View className="h-2" />}
+        renderItem={({ item }) => {
+          const card = (
+            <Pressable className="bg-muted rounded-xl p-4">
+              <Text className="font-semibold text-lg">{item.title}</Text>
+              {item.subtitle ? (
+                <Text className="text-muted-foreground mt-1" numberOfLines={2}>
+                  {item.subtitle}
+                </Text>
+              ) : null}
+              <Text className="text-xs text-muted-foreground mt-2">
+                {item.kind === "character" ? "Character" : "Spell"}
+              </Text>
+            </Pressable>
+          );
 
-            <TouchableOpacity onPress={() => toggleFavourite(item)}>
-              <Text className="text-xl">❤️</Text>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </Link>
+          // Link to the right detail page
+          if (item.kind === "character") {
+            return (
+              <Link href={`/characters/${item.id}`} asChild>
+                {card}
+              </Link>
+            );
+          }
 
-      ))}
+          return (
+            <Link
+              href={{
+                pathname: "/spells/[id]",
+                params: {
+                  id: item.id,
+                  name: item.title,
+                  description: item.subtitle ?? "",
+                },
+              }}
+              asChild
+            >
+              {card}
+            </Link>
+          );
+        }}
+      />
     </View>
   );
-}
+};
+
+export default FavouritesScreen;

@@ -1,50 +1,44 @@
-# Welcome to your Expo app 👋
+# Larry Butter (React Native / Expo)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Mobile Harry Potter app built with **React Native + Expo Router**.  
+The app shows **Characters** and **Spells** from an external API and lets you save them as **Favourites**.
 
-## Get started
+## What you can do
+- Browse **Characters** and **Spells** (FlatList)
+- Open **detail pages** (routing)
+- Add/remove **favourites**
+- Pick a **profile image** for a character (Image Picker)
+- Get a **notification** when something is favourited/unfavourited
 
-1. Install dependencies
+## Tech used
+- React Native + Expo
+- Expo Router (tabs + detail screens)
+- NativeWind (styling)
+- AsyncStorage (persist favourites + images)
+- Supabase (store favourite characters per device)
+- Expo Image Picker
+- Expo Notifications
 
-   ```bash
-   npm install
-   ```
+## APIs (GET)
+- Characters: `https://sampleapis.assimilate.be/harrypotter/characters`
+- Spells: `https://sampleapis.assimilate.be/harrypotter/spells`
 
-2. Start the app
+## Where data is stored
+- **Favourite Characters** → Supabase table `favourite_characters` (linked to `device_id`)
+- **Favourite Spells** → AsyncStorage (`favouriteSpells`)
+- **Picked character images** → AsyncStorage map (`character_images_v1`)
 
-   ```bash
-    npx expo start
-   ```
+## Requirements checklist
+- [x] 3+ screens with routing (Tabs + detail screens)
+- [x] FlatList used
+- [x] External API GET requests
+- [x] Persistent storage (AsyncStorage)
+- [x] Shared state via Context (FavouritesContext)
+- [x] External service used (Supabase)
+- [x] 2+ Expo components (ImagePicker + Notifications)
+- [x] UX styling applied
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+## Run
 ```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+npm install
+npx expo start --tunnel

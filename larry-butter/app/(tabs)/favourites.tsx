@@ -1,44 +1,33 @@
 // app/(tabs)/favourites.tsx
 import { useCallback, useState } from "react";
-import { View, FlatList, Pressable, Image, Role } from "react-native";
+import { View, FlatList, Pressable, Image } from "react-native";
 import { Link } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 
 import { Text } from "@/components/ui/text";
+import { Badge } from "@/components/ui/badge"; // <--- 1. Import Badge
 import { useFavourites } from "@/context/FavouritesContext";
 import { getCharacterImage } from "@/lib/characterImages";
 
-const pillStyle = (value: string) => {
-  const v = value.toLowerCase();
-
-  if (v.includes("beginner")) return { box: "bg-emerald-500/10 border-emerald-500/20", text: "text-emerald-700" };
-  if (v.includes("intermediate")) return { box: "bg-blue-500/10 border-blue-500/20", text: "text-blue-700" };
-  if (v.includes("advanced")) return { box: "bg-purple-500/10 border-purple-500/20", text: "text-purple-700" };
-
-  if (v.includes("curse")) return { box: "bg-red-500/10 border-red-500/20", text: "text-red-700" };
-  if (v.includes("hex")) return { box: "bg-orange-500/10 border-orange-500/20", text: "text-orange-700" };
-  if (v.includes("jinx")) return { box: "bg-yellow-500/10 border-yellow-500/20", text: "text-yellow-800" };
-  if (v.includes("charm") || v.includes("healing"))
-    return { box: "bg-emerald-500/10 border-emerald-500/20", text: "text-emerald-700" };
-
-  return { box: "bg-muted border-border", text: "text-muted-foreground" };
-};
-
-const housePill = (house?: string) => {
-  const h = (house ?? "").toLowerCase();
-
-  if (h === "gryffindor") return "bg-red-500/10 border-red-500/30 text-red-700";
-  if (h === "slytherin") return "bg-emerald-500/10 border-emerald-500/30 text-emerald-700";
-  if (h === "ravenclaw") return "bg-blue-500/10 border-blue-500/30 text-blue-700";
-  if (h === "hufflepuff") return "bg-amber-500/10 border-amber-500/30 text-amber-800";
-
-  return "bg-muted border-border text-muted-foreground";
-};
-
+// <--- 2. Deleted 'pillStyle' and 'housePill' helper functions
 
 type FavouriteRow =
-  | { kind: "character"; id: string; title: string; subtitle?: string; house?: string; role?: string }
-  | { kind: "spell"; id: string; title: string; subtitle?: string; type?: string; difficulty?: string };
+  | {
+      kind: "character";
+      id: string;
+      title: string;
+      subtitle?: string;
+      house?: string;
+      role?: string;
+    }
+  | {
+      kind: "spell";
+      id: string;
+      title: string;
+      subtitle?: string;
+      type?: string;
+      difficulty?: string;
+    };
 
 const FavouritesScreen = () => {
   const { favourites, favouriteSpells, loading } = useFavourites();
@@ -163,60 +152,50 @@ const FavouritesScreen = () => {
                 <Text className="font-semibold text-lg">{item.title}</Text>
 
                 {item.subtitle ? (
-                  <Text className="text-muted-foreground mt-1" numberOfLines={2}>
+                  <Text
+                    className="text-muted-foreground mt-1"
+                    numberOfLines={2}
+                  >
                     {item.subtitle}
                   </Text>
                 ) : null}
 
-                {/* ✅ Spell pills go HERE */}
+                {/* <--- 3. Replaced Spell pills with Badge */}
                 {item.kind === "spell" ? (
                   <View className="flex-row gap-2 mt-2">
-                    {item.type ? (
-                      <View className={`px-2.5 py-1 rounded-full border ${pillStyle(item.type).box}`}>
-                        <Text className={`text-xs ${pillStyle(item.type).text}`}>{item.type}</Text>
-                      </View>
-                    ) : null}
-
-
-                    {item.difficulty ? (
-                      <View className={`px-2.5 py-1 rounded-full border ${pillStyle(item.difficulty).box}`}>
-                        <Text className={`text-xs ${pillStyle(item.difficulty).text}`}>{item.difficulty}</Text>
-                      </View>
-                    ) : null}
+                    <Badge label={item.type} />
+                    <Badge label={item.difficulty} />
                   </View>
                 ) : null}
 
+                {/* <--- 4. Replaced Character house pill with Badge */}
                 {item.kind === "character" ? (
                   <View className="flex-row items-center gap-2 mt-2">
-                    {item.house ? (
-                      <View className={`px-2.5 py-1 rounded-full border ${housePill(item.house)}`}>
-                        <Text className="text-xs">{item.house}</Text>
-                      </View>
-                    ) : null}
+                    <Badge label={item.house} />
 
                     {item.role ? (
-                      <Text className="text-xs text-muted-foreground" numberOfLines={1}>
+                      <Text
+                        className="text-xs text-muted-foreground"
+                        numberOfLines={1}
+                      >
                         {item.role}
                       </Text>
                     ) : null}
                   </View>
                 ) : null}
 
-
+                {/* Bottom Right Tag */}
                 <View className="mt-2">
-                  <View className="self-start px-2.5 py-1 rounded-full bg-muted border border-border">
-                    <Text className="text-xs text-muted-foreground">
-                      {item.kind === "character" ? "Character" : "Spell"}
-                    </Text>
-                  </View>
+                  <Badge
+                    label={item.kind === "character" ? "Character" : "Spell"}
+                    // The Badge defaults to gray, so this matches your original style
+                  />
                 </View>
               </View>
             </Pressable>
           );
 
           if (item.kind === "character") {
-            // const character = favourites.find((c) => c.id === item.id);
-
             return (
               <Link
                 href={{

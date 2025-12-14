@@ -14,6 +14,7 @@ import { Text } from "@/components/ui/text";
 import { Character } from "@/types";
 import { useFavourites } from "@/context/FavouritesContext";
 import { getCharacterImage } from "@/lib/characterImages";
+import { Badge } from "@/components/ui/badge"; // <--- 1. Import Badge
 
 const CHARACTERS_URL =
   "https://sampleapis.assimilate.be/harrypotter/characters";
@@ -26,17 +27,7 @@ type ApiCharacter = {
   description?: string;
 };
 
-const housePill = (house?: string) => {
-  const h = (house ?? "").toLowerCase();
-
-  if (h === "gryffindor") return "bg-red-500/10 border-red-500/30 text-red-700";
-  if (h === "slytherin") return "bg-emerald-500/10 border-emerald-500/30 text-emerald-700";
-  if (h === "ravenclaw") return "bg-blue-500/10 border-blue-500/30 text-blue-700";
-  if (h === "hufflepuff") return "bg-amber-500/10 border-amber-500/30 text-amber-800";
-
-  return "bg-muted border-border text-muted-foreground";
-};
-
+// <--- 2. Deleted 'housePill' function from here
 
 const CharactersScreen = () => {
   const [characters, setCharacters] = useState<Character[]>([]);
@@ -186,10 +177,8 @@ const CharactersScreen = () => {
                   <Text className="text-base font-semibold">{item.name}</Text>
 
                   <View className="flex-row items-center gap-2 mt-2">
-                    <View className={`px-2.5 py-1 rounded-full border ${housePill(item.house)}`}>
-                      <Text className="text-xs">{item.house}</Text>
-                    </View>
-
+                    {/* <--- 3. Using the new Badge component here */}
+                    <Badge label={item.house} />
 
                     {item.role ? (
                       <Text

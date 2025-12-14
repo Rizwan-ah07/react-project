@@ -5,6 +5,7 @@ import { Link } from "expo-router";
 
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge"; // <--- 1. Import Badge
 import { useFavourites } from "@/context/FavouritesContext";
 import { Spell } from "@/types";
 
@@ -16,18 +17,7 @@ type ApiSpell = {
   difficulty?: string;
 };
 
-const spellPill = (label?: string) => {
-  const v = (label ?? "").toLowerCase();
-
-  if (v === "curse") return "bg-red-500/10 border-red-500/30 text-red-700";
-  if (v === "charm") return "bg-blue-500/10 border-blue-500/30 text-blue-700";
-  if (v === "hex") return "bg-purple-500/10 border-purple-500/30 text-purple-700";
-  if (v === "jinx") return "bg-amber-500/10 border-amber-500/30 text-amber-800";
-  if (v === "healing") return "bg-emerald-500/10 border-emerald-500/30 text-emerald-700";
-
-  return "bg-muted border-border text-muted-foreground";
-};
-
+// <--- 2. Deleted 'spellPill' helper function
 
 const SpellsScreen = () => {
   const [spells, setSpells] = useState<Spell[]>([]);
@@ -99,19 +89,19 @@ const SpellsScreen = () => {
 
           return (
             <View className="bg-card border border-border rounded-2xl p-4">
-            <Link
-              href={{
-                pathname: "/spells/[id]",
-                params: {
-                  id: item.id,
-                  name: item.name,
-                  description: item.description ?? "",
-                  type: item.type ?? "",
-                  difficulty: item.difficulty ?? "",
-                },
-              }}
-              asChild
-            >
+              <Link
+                href={{
+                  pathname: "/spells/[id]",
+                  params: {
+                    id: item.id,
+                    name: item.name,
+                    description: item.description ?? "",
+                    type: item.type ?? "",
+                    difficulty: item.difficulty ?? "",
+                  },
+                }}
+                asChild
+              >
                 <Pressable className="flex-row items-start gap-3">
                   <View className="w-11 h-11 rounded-full bg-muted border border-border items-center justify-center">
                     <Text className="text-lg">✨</Text>
@@ -127,19 +117,12 @@ const SpellsScreen = () => {
                         ? item.description
                         : "No description"}
                     </Text>
+                    
+                    {/* <--- 3. Using the new Badge component here */}
                     <View className="flex-row gap-2 mt-2">
-                    {item.type ? (
-                      <View className={`px-2.5 py-1 rounded-full border ${spellPill(item.type)}`}>
-                        <Text className="text-xs">{item.type}</Text>
-                      </View>
-                    ) : null}
-
-                    {item.difficulty ? (
-                      <View className={`px-2.5 py-1 rounded-full border ${spellPill(item.difficulty)}`}>
-                        <Text className="text-xs">{item.difficulty}</Text>
-                      </View>
-                    ) : null}
-                  </View>
+                      <Badge label={item.type} />
+                      <Badge label={item.difficulty} />
+                    </View>
                   </View>
                 </Pressable>
               </Link>

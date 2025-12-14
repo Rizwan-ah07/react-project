@@ -1,15 +1,11 @@
-// app/(tabs)/favourites.tsx
 import { useCallback, useState } from "react";
 import { View, FlatList, Pressable, Image } from "react-native";
 import { Link } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
-
 import { Text } from "@/components/ui/text";
-import { Badge } from "@/components/ui/badge"; // <--- 1. Import Badge
+import { Badge } from "@/components/ui/badge"; 
 import { useFavourites } from "@/context/FavouritesContext";
 import { getCharacterImage } from "@/lib/characterImages";
-
-// <--- 2. Deleted 'pillStyle' and 'housePill' helper functions
 
 type FavouriteRow =
   | {
@@ -35,8 +31,6 @@ const FavouritesScreen = () => {
   const [imagesById, setImagesById] = useState<Record<string, string | null>>(
     {}
   );
-
-  // Reload images when coming back to this screen
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
@@ -109,7 +103,6 @@ const FavouritesScreen = () => {
 
   return (
     <View className="flex-1 bg-background">
-      {/* Header */}
       <View className="px-4 pt-4 pb-2">
         <Text className="text-2xl font-bold">Favourites</Text>
         <Text className="text-muted-foreground mt-1">
@@ -127,7 +120,6 @@ const FavouritesScreen = () => {
 
           const card = (
             <Pressable className="bg-card border border-border rounded-2xl p-4 flex-row items-center gap-3">
-              {/* Left */}
               {item.kind === "character" ? (
                 img ? (
                   <Image
@@ -147,7 +139,6 @@ const FavouritesScreen = () => {
                 </View>
               )}
 
-              {/* Middle */}
               <View className="flex-1">
                 <Text className="font-semibold text-lg">{item.title}</Text>
 
@@ -160,7 +151,6 @@ const FavouritesScreen = () => {
                   </Text>
                 ) : null}
 
-                {/* <--- 3. Replaced Spell pills with Badge */}
                 {item.kind === "spell" ? (
                   <View className="flex-row gap-2 mt-2">
                     <Badge label={item.type} />
@@ -168,7 +158,6 @@ const FavouritesScreen = () => {
                   </View>
                 ) : null}
 
-                {/* <--- 4. Replaced Character house pill with Badge */}
                 {item.kind === "character" ? (
                   <View className="flex-row items-center gap-2 mt-2">
                     <Badge label={item.house} />
@@ -184,11 +173,9 @@ const FavouritesScreen = () => {
                   </View>
                 ) : null}
 
-                {/* Bottom Right Tag */}
                 <View className="mt-2">
                   <Badge
                     label={item.kind === "character" ? "Character" : "Spell"}
-                    // The Badge defaults to gray, so this matches your original style
                   />
                 </View>
               </View>

@@ -1,7 +1,6 @@
 import { View, Text } from "react-native";
 import { cn } from "@/lib/utils";
 
-// Unified logic for colors based on content (House or Spell Type)
 const getBadgeStyle = (label?: string) => {
   const v = (label ?? "").toLowerCase();
 
@@ -10,7 +9,7 @@ const getBadgeStyle = (label?: string) => {
     return { container: "bg-red-500/10 border-red-500/30", text: "text-red-700" };
   }
   
-  // Green (Emerald)
+  // Green 
   if (v === "slytherin" || v.includes("healing") || v.includes("charm") || v.includes("beginner")) {
     return { container: "bg-emerald-500/10 border-emerald-500/30", text: "text-emerald-700" };
   }
@@ -20,7 +19,7 @@ const getBadgeStyle = (label?: string) => {
     return { container: "bg-blue-500/10 border-blue-500/30", text: "text-blue-700" };
   }
 
-  // Yellow/Amber
+  // Yellow
   if (v === "hufflepuff" || v.includes("jinx")) {
     return { container: "bg-amber-500/10 border-amber-500/30", text: "text-amber-800" };
   }
@@ -35,13 +34,13 @@ const getBadgeStyle = (label?: string) => {
 };
 
 interface BadgeProps {
-  label?: string; // The text to display (e.g. "Gryffindor", "Hex")
-  className?: string; // Optional overrides for the container
-  textClassName?: string; // Optional overrides for the text
+  label?: string; 
+  className?: string; 
+  textClassName?: string; 
 }
 
 export const Badge = ({ label, className, textClassName }: BadgeProps) => {
-  if (!label) return null; // Don't render empty badges
+  if (!label) return null; 
 
   const styles = getBadgeStyle(label);
 

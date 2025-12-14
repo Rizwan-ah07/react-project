@@ -1,5 +1,3 @@
-// components/ui/text.tsx
-
 import { Text as RNText } from "react-native";
 import { cn } from "@/lib/utils";
 

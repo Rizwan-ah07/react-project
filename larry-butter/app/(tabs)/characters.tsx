@@ -1,20 +1,12 @@
-// app/(tabs)/characters.tsx
 import { useCallback, useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  Pressable,
-  View,
-} from "react-native";
+import {ActivityIndicator, FlatList, Image, Pressable, View,} from "react-native";
 import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
-
 import { Text } from "@/components/ui/text";
 import { Character } from "@/types";
 import { useFavourites } from "@/context/FavouritesContext";
 import { getCharacterImage } from "@/lib/characterImages";
-import { Badge } from "@/components/ui/badge"; // <--- 1. Import Badge
+import { Badge } from "@/components/ui/badge"; 
 
 const CHARACTERS_URL =
   "https://sampleapis.assimilate.be/harrypotter/characters";
@@ -27,14 +19,11 @@ type ApiCharacter = {
   description?: string;
 };
 
-// <--- 2. Deleted 'housePill' function from here
 
 const CharactersScreen = () => {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  // id -> imageUri
   const [imagesById, setImagesById] = useState<Record<string, string | null>>(
     {}
   );
@@ -79,7 +68,6 @@ const CharactersScreen = () => {
     };
   }, []);
 
-  // reload images whenever screen becomes active (so after you pick an image)
   const loadImages = useCallback(async () => {
     try {
       const entries = await Promise.all(
@@ -177,7 +165,6 @@ const CharactersScreen = () => {
                   <Text className="text-base font-semibold">{item.name}</Text>
 
                   <View className="flex-row items-center gap-2 mt-2">
-                    {/* <--- 3. Using the new Badge component here */}
                     <Badge label={item.house} />
 
                     {item.role ? (

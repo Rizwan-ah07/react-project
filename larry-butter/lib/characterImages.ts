@@ -2,7 +2,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const KEY = "character_images_v1";
 
-// stored as: { [characterId]: imageUri }
 export const getCharacterImage = async (characterId: string) => {
   const raw = await AsyncStorage.getItem(KEY);
   if (!raw) return null;

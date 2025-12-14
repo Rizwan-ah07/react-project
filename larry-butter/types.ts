@@ -1,5 +1,3 @@
-// types.ts
-
 export interface Character {
   id: string;
   name: string;

@@ -1,5 +1,3 @@
-// components/ui/button.tsx
-
 import { Pressable } from "react-native";
 import { cn } from "@/lib/utils";
 
@@ -16,13 +14,10 @@ export const Button = ({
   return (
     <Pressable
       className={cn(
-        // base button layout
         "flex-row items-center justify-center rounded-md px-4 py-2",
-        // variants
         variant === "default" && "bg-primary",
         variant === "outline" && "border border-border bg-background",
         variant === "ghost" && "bg-transparent",
-        // allow overrides
         className
       )}
       {...props}

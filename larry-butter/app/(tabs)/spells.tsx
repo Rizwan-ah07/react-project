@@ -1,11 +1,9 @@
-// app/(tabs)/spells.tsx
 import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
 import { Link } from "expo-router";
-
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge"; // <--- 1. Import Badge
+import { Badge } from "@/components/ui/badge"; 
 import { useFavourites } from "@/context/FavouritesContext";
 import { Spell } from "@/types";
 
@@ -16,8 +14,6 @@ type ApiSpell = {
   type?: string;
   difficulty?: string;
 };
-
-// <--- 2. Deleted 'spellPill' helper function
 
 const SpellsScreen = () => {
   const [spells, setSpells] = useState<Spell[]>([]);
@@ -71,7 +67,6 @@ const SpellsScreen = () => {
 
   return (
     <View className="flex-1 bg-background">
-      {/* Header */}
       <View className="px-4 pt-4 pb-2">
         <Text className="text-2xl font-bold">Spells</Text>
         <Text className="text-muted-foreground mt-1">
@@ -117,8 +112,6 @@ const SpellsScreen = () => {
                         ? item.description
                         : "No description"}
                     </Text>
-                    
-                    {/* <--- 3. Using the new Badge component here */}
                     <View className="flex-row gap-2 mt-2">
                       <Badge label={item.type} />
                       <Badge label={item.difficulty} />

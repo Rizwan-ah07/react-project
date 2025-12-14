@@ -1,5 +1,3 @@
-// context/FavouritesContext.tsx
-
 import { ReactNode, createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Character, Spell, DbFavouriteCharacterRow } from "@/types";
@@ -29,10 +27,9 @@ const FavouritesProvider = ({ children }: { children: ReactNode }) => {
   const [deviceId, setDeviceId] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
 
-  // characters in Supabase
   const [favourites, setFavourites] = useState<Character[]>([]);
 
-  // spells in AsyncStorage
+
   const [favouriteSpells, setFavouriteSpells] = useState<Spell[]>([]);
 
   useEffect(() => {
@@ -44,13 +41,11 @@ const FavouritesProvider = ({ children }: { children: ReactNode }) => {
         if (cancelled) return;
         setDeviceId(id);
 
-        // load spells (AsyncStorage)
         const storedSpells = await AsyncStorage.getItem(STORAGE_KEY_SPELLS);
         if (!cancelled && storedSpells) {
           setFavouriteSpells(JSON.parse(storedSpells));
         }
 
-        // load character favourites (Supabase)
         const { data, error } = await supabase
           .from("favourite_characters")
           .select("device_id, character_id, name, house, image")
@@ -81,7 +76,6 @@ const FavouritesProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  // save spells favourites to AsyncStorage
   useEffect(() => {
     const save = async () => {
       try {
@@ -101,7 +95,6 @@ const toggleFavourite = (character: Character) => {
 
   const exists = favourites.some((c) => c.id === character.id);
 
-  // optimistic UI update
   setFavourites((current) => {
     if (exists) {
       return current.filter((c) => c.id !== character.id);
@@ -117,11 +110,9 @@ const toggleFavourite = (character: Character) => {
     notifyFavouriteAdded(character.name);
   }
 
-  // write to Supabase in background
   (async () => {
     try {
       if (exists) {
-        // remove favourite
         const { error } = await supabase
           .from("favourite_characters")
           .delete()
@@ -130,7 +121,6 @@ const toggleFavourite = (character: Character) => {
 
         if (error) throw error;
       } else {
-        // add favourite
         const { error } = await supabase
           .from("favourite_characters")
           .insert({
@@ -146,7 +136,6 @@ const toggleFavourite = (character: Character) => {
     } catch (e) {
       console.log("Error toggling favourite character", e);
 
-      // rollback UI if DB fails
       setFavourites((current) => {
         const stillExists = current.some((c) => c.id === character.id);
 

@@ -73,7 +73,6 @@ const CharacterDetailsScreen = () => {
   return (
     <ScrollView className="flex-1 bg-white">
       <View className="items-center px-6 pt-10 pb-6">
-        {/* Avatar */}
         {pickedImage ? (
           <Image
             source={{ uri: pickedImage }}
@@ -97,7 +96,6 @@ const CharacterDetailsScreen = () => {
           {character.house}
         </Text>
 
-        {/* Pick image */}
         <Pressable
           onPress={pickImage}
           className="px-4 py-2 border border-neutral-300 rounded-full mb-4"
@@ -105,7 +103,6 @@ const CharacterDetailsScreen = () => {
           <Text>Pick image</Text>
         </Pressable>
 
-        {/* Favourite toggle */}
         <Pressable
           onPress={() => toggleFavourite(character)}
           className="px-4 py-2 border border-neutral-300 rounded-full flex-row items-center mb-6"

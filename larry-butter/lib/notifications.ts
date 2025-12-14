@@ -1,4 +1,3 @@
-// lib/notifications.ts
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
@@ -13,7 +12,6 @@ Notifications.setNotificationHandler({
 });
 
 export const registerForNotifications = async () => {
-  // Web: skip (notifications are not consistent there)
   if (Platform.OS === "web") return;
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -38,7 +36,7 @@ export const notifyFavouriteAdded = async (title: string) => {
       title: "Added to favourites ✅",
       body: title,
     },
-    trigger: null, // immediate
+    trigger: null, 
   });
 };
 

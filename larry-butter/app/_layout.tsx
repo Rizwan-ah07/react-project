@@ -2,8 +2,14 @@
 import { Stack } from "expo-router";
 import "@/global.css";
 import FavouritesProvider from "@/context/FavouritesContext";
+import { useEffect } from "react";
+import { registerForNotifications } from "@/lib/notifications";
 
 const RootLayout = () => {
+    useEffect(() => {
+    registerForNotifications();
+  }, []);
+
   return (
     <FavouritesProvider>
       <Stack>

@@ -5,6 +5,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Character, Spell, DbFavouriteCharacterRow } from "@/types";
 import { supabase } from "@/lib/supabase";
 import { getDeviceId } from "@/lib/device";
+import { notifyFavouriteAdded, notifyFavouriteRemoved } from "@/lib/notifications";
+
 
 
 interface FavouritesContextValue {
@@ -107,6 +109,14 @@ const toggleFavourite = (character: Character) => {
     return [...current, character];
   });
 
+  // notification
+
+    if (exists) {
+    notifyFavouriteRemoved(character.name);
+  } else {
+    notifyFavouriteAdded(character.name);
+  }
+
   // write to Supabase in background
   (async () => {
     try {
@@ -151,13 +161,20 @@ const toggleFavourite = (character: Character) => {
 
 
 
-  const toggleFavouriteSpell = (spell: Spell) => {
-    setFavouriteSpells((current) => {
-      const exists = current.some((s) => s.id === spell.id);
-      if (exists) return current.filter((s) => s.id !== spell.id);
-      return [...current, spell];
-    });
-  };
+const toggleFavouriteSpell = (spell: Spell) => {
+  const exists = favouriteSpells.some((s) => s.id === spell.id);
+
+  setFavouriteSpells((current) => {
+    if (exists) return current.filter((s) => s.id !== spell.id);
+    return [...current, spell];
+  });
+
+  if (exists) {
+    notifyFavouriteRemoved(spell.name);
+  } else {
+    notifyFavouriteAdded(spell.name);
+  }
+};
 
   const isFavouriteSpell = (id: string) => favouriteSpells.some((s) => s.id === id);
 

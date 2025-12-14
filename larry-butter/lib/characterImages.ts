@@ -11,6 +11,11 @@ export const getCharacterImage = async (characterId: string) => {
   return map[characterId] ?? null;
 };
 
+export const getCharacterImageMap = async () => {
+  const raw = await AsyncStorage.getItem(KEY);
+  return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+};
+
 export const setCharacterImage = async (characterId: string, uri: string) => {
   const raw = await AsyncStorage.getItem(KEY);
   const map = raw ? (JSON.parse(raw) as Record<string, string>) : {};

@@ -26,6 +26,18 @@ type ApiCharacter = {
   description?: string;
 };
 
+const housePill = (house?: string) => {
+  const h = (house ?? "").toLowerCase();
+
+  if (h === "gryffindor") return "bg-red-500/10 border-red-500/30 text-red-700";
+  if (h === "slytherin") return "bg-emerald-500/10 border-emerald-500/30 text-emerald-700";
+  if (h === "ravenclaw") return "bg-blue-500/10 border-blue-500/30 text-blue-700";
+  if (h === "hufflepuff") return "bg-amber-500/10 border-amber-500/30 text-amber-800";
+
+  return "bg-muted border-border text-muted-foreground";
+};
+
+
 const CharactersScreen = () => {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -101,30 +113,47 @@ const CharactersScreen = () => {
     }, [characters.length, loadImages])
   );
 
-  if (loading) return <ActivityIndicator animating={true} />;
+  if (loading) {
+    return (
+      <View className="flex-1 bg-background items-center justify-center">
+        <ActivityIndicator animating={true} />
+        <Text className="text-muted-foreground mt-3">Loading characters…</Text>
+      </View>
+    );
+  }
 
   if (error) {
     return (
-      <View className="flex-1 items-center justify-center">
-        <Text className="text-red-500">{error}</Text>
+      <View className="flex-1 bg-background items-center justify-center px-6">
+        <Text className="text-xl font-semibold mb-2">Something went wrong</Text>
+        <Text className="text-muted-foreground text-center">{error}</Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-background">
+      {/* Header */}
+      <View className="px-4 pt-4 pb-2">
+        <Text className="text-2xl font-bold">Characters</Text>
+        <Text className="text-muted-foreground mt-1">
+          Tap to view details • Long press to favourite
+        </Text>
+      </View>
+
       <FlatList
         data={characters}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 16 }}
-        ItemSeparatorComponent={() => <View className="h-[1px] bg-neutral-200" />}
+        contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
+        ItemSeparatorComponent={() => <View className="h-3" />}
         renderItem={({ item }) => {
           const favourite = isFavourite(item.id);
           const img = imagesById[item.id];
+          const initial = item.name?.trim()?.[0]?.toUpperCase() ?? "?";
 
           return (
             <Pressable
-              className="flex-row items-center justify-between py-3"
+              className="bg-card border border-border rounded-2xl p-4 flex-row items-center justify-between"
               onPress={() =>
                 router.push({
                   pathname: "/characters/[id]",
@@ -139,31 +168,52 @@ const CharactersScreen = () => {
               }
               onLongPress={() => toggleFavourite(item)}
             >
-              <View className="flex-row items-center gap-3">
+              <View className="flex-row items-center gap-3 flex-1 pr-3">
                 {img ? (
                   <Image
                     source={{ uri: img }}
-                    style={{ width: 44, height: 44, borderRadius: 22 }}
+                    style={{ width: 48, height: 48, borderRadius: 24 }}
                   />
                 ) : (
-                  <View className="w-11 h-11 rounded-full bg-neutral-200 items-center justify-center">
-                    <Text className="text-xs text-neutral-500">N/A</Text>
+                  <View className="w-12 h-12 rounded-full bg-muted border border-border items-center justify-center">
+                    <Text className="text-sm font-bold text-muted-foreground">
+                      {initial}
+                    </Text>
                   </View>
                 )}
 
-                <View>
+                <View className="flex-1">
                   <Text className="text-base font-semibold">{item.name}</Text>
-                  <Text className="text-sm text-neutral-500">{item.house}</Text>
+
+                  <View className="flex-row items-center gap-2 mt-2">
+                    <View className={`px-2.5 py-1 rounded-full border ${housePill(item.house)}`}>
+                      <Text className="text-xs">{item.house}</Text>
+                    </View>
+
+
+                    {item.role ? (
+                      <Text
+                        className="text-xs text-muted-foreground"
+                        numberOfLines={1}
+                      >
+                        {item.role}
+                      </Text>
+                    ) : null}
+                  </View>
                 </View>
               </View>
 
-              <Text
-                className={
-                  favourite ? "text-red-500 text-lg" : "text-neutral-300 text-lg"
-                }
-              >
-                {favourite ? "♥" : "♡"}
-              </Text>
+              <View className="px-3 py-2 rounded-full bg-muted border border-border">
+                <Text
+                  className={
+                    favourite
+                      ? "text-red-500 text-lg"
+                      : "text-muted-foreground text-lg"
+                  }
+                >
+                  {favourite ? "♥" : "♡"}
+                </Text>
+              </View>
             </Pressable>
           );
         }}

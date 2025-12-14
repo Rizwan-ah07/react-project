@@ -1,6 +1,6 @@
 // app/(tabs)/favourites.tsx
 import { useCallback, useState } from "react";
-import { View, FlatList, Pressable, Image } from "react-native";
+import { View, FlatList, Pressable, Image, Role } from "react-native";
 import { Link } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 
@@ -24,8 +24,20 @@ const pillStyle = (value: string) => {
   return { box: "bg-muted border-border", text: "text-muted-foreground" };
 };
 
+const housePill = (house?: string) => {
+  const h = (house ?? "").toLowerCase();
+
+  if (h === "gryffindor") return "bg-red-500/10 border-red-500/30 text-red-700";
+  if (h === "slytherin") return "bg-emerald-500/10 border-emerald-500/30 text-emerald-700";
+  if (h === "ravenclaw") return "bg-blue-500/10 border-blue-500/30 text-blue-700";
+  if (h === "hufflepuff") return "bg-amber-500/10 border-amber-500/30 text-amber-800";
+
+  return "bg-muted border-border text-muted-foreground";
+};
+
+
 type FavouriteRow =
-  | { kind: "character"; id: string; title: string; subtitle?: string }
+  | { kind: "character"; id: string; title: string; subtitle?: string; house?: string; role?: string }
   | { kind: "spell"; id: string; title: string; subtitle?: string; type?: string; difficulty?: string };
 
 const FavouritesScreen = () => {
@@ -81,7 +93,9 @@ const FavouritesScreen = () => {
       kind: "character" as const,
       id: c.id,
       title: c.name,
-      subtitle: c.house ? c.house : "Character",
+      subtitle: c.description ? c.description : undefined,
+      house: c.house,
+      role: c.role,
     })),
     ...favouriteSpells.map((s) => ({
       kind: "spell" as const,
@@ -172,6 +186,22 @@ const FavouritesScreen = () => {
                   </View>
                 ) : null}
 
+                {item.kind === "character" ? (
+                  <View className="flex-row items-center gap-2 mt-2">
+                    {item.house ? (
+                      <View className={`px-2.5 py-1 rounded-full border ${housePill(item.house)}`}>
+                        <Text className="text-xs">{item.house}</Text>
+                      </View>
+                    ) : null}
+
+                    {item.role ? (
+                      <Text className="text-xs text-muted-foreground" numberOfLines={1}>
+                        {item.role}
+                      </Text>
+                    ) : null}
+                  </View>
+                ) : null}
+
 
                 <View className="mt-2">
                   <View className="self-start px-2.5 py-1 rounded-full bg-muted border border-border">
@@ -185,7 +215,7 @@ const FavouritesScreen = () => {
           );
 
           if (item.kind === "character") {
-            const character = favourites.find((c) => c.id === item.id);
+            // const character = favourites.find((c) => c.id === item.id);
 
             return (
               <Link
@@ -193,10 +223,10 @@ const FavouritesScreen = () => {
                   pathname: "/characters/[id]",
                   params: {
                     id: item.id,
-                    name: character?.name ?? item.title,
-                    house: character?.house ?? "Unknown",
-                    role: character?.role ?? "",
-                    description: character?.description ?? "",
+                    name: item.title,
+                    house: item.house ?? "Unknown",
+                    role: item.role ?? "",
+                    description: item.subtitle ?? "",
                   },
                 }}
                 asChild
